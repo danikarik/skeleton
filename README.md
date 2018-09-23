@@ -1,0 +1,2 @@
+# skeleton
+Go App Skeleton
