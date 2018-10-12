@@ -22,13 +22,17 @@ var (
 )
 
 func main() {
+	var err error
 	// Our graceful valve shut-off package to manage code preemption and
 	// shutdown signaling.
-	valv := valve.New()
-	baseCtx := valv.Context()
+	vlv := valve.New()
+	baseCtx := vlv.Context()
 	// Parse flags.
 	fs.Usage = usageFor(fs, os.Args[0]+" [flags]")
-	fs.Parse(os.Args[1:])
+	err = fs.Parse(os.Args[1:])
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
 	// Create routing mux.
 	r := router()
 	// Initialize http2 server.
@@ -36,37 +40,40 @@ func main() {
 		Addr:    *httpAddr,
 		Handler: chi.ServerBaseContext(baseCtx, r),
 	}
-	http2.ConfigureServer(&srv, nil)
+	err = http2.ConfigureServer(&srv, nil)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
 	// Signals.
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
-	// Start server.
+	// Graceful shutdown.
 	go func() {
-		for range c {
-			// sig is a ^C, handle it
-			log.Println("shutting down..")
+		<-c
+		// sig is a ^C, handle it
+		log.Println("shutting down..")
 
-			// first valv
-			valv.Shutdown(10 * time.Second)
+		// first valve
+		vlv.Shutdown(10 * time.Second)
 
-			// create context with timeout
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
+		// create context with timeout
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
 
-			// start http shutdown
-			srv.Shutdown(ctx)
+		// start http shutdown
+		srv.Shutdown(ctx)
 
-			// verify, in worst case call cancel via defer
-			select {
-			case <-time.After(11 * time.Second):
-				log.Println("not all connections done")
-			case <-ctx.Done():
+		// verify, in worst case call cancel via defer
+		select {
+		case <-time.After(11 * time.Second):
+			log.Println("not all connections done")
+		case <-ctx.Done():
 
-			}
 		}
 	}()
+	// Start server.
 	log.Printf("listening on %s", *httpAddr)
-	err := srv.ListenAndServeTLS(*certFile, *keyFile)
+	err = srv.ListenAndServeTLS(*certFile, *keyFile)
 	if err != nil {
 		if err != http.ErrServerClosed {
 			log.Fatalf("%v", err)
