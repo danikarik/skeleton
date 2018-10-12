@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -14,9 +15,14 @@ func router() *chi.Mux {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World"))
+	if _, err := w.Write([]byte("Hello World")); err != nil {
+		log.Printf("%v", err)
+	}
+
 }
 
 func protoHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(r.Proto))
+	if _, err := w.Write([]byte(r.Proto)); err != nil {
+		log.Printf("%v", err)
+	}
 }
