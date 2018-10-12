@@ -54,14 +54,16 @@ func main() {
 		log.Println("shutting down..")
 
 		// first valve
-		vlv.Shutdown(10 * time.Second)
+		err = vlv.Shutdown(10 * time.Second)
+		log.Printf("%v", err)
 
 		// create context with timeout
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
 		// start http shutdown
-		srv.Shutdown(ctx)
+		err = srv.Shutdown(ctx)
+		log.Printf("%v", err)
 
 		// verify, in worst case call cancel via defer
 		select {
