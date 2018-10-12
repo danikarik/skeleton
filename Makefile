@@ -18,11 +18,11 @@ prep: ## Prepare project structure
 
 key: ## Generate private key
 	@echo 'Generating private key...'
-	@openssl genrsa -out certs/localhost.key 4096
+	@openssl genrsa -out certs/server.key 4096
 
 cert: key ## Generate SSL certificate
 	@echo 'Generating SSL certificate...'
-	@openssl req -new -x509 -key certs/localhost.key -out certs/localhost.cert -days 3650 -subj /CN=localhost
+	@openssl req -new -x509 -key certs/server.key -out certs/server.cert -days 3650 -subj /CN=localhost
 
 build: ## Build binaries
 	@echo 'Building server binary...'

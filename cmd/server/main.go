@@ -16,8 +16,8 @@ import (
 
 var (
 	fs       = flag.NewFlagSet("server", flag.ExitOnError)
-	certFile = fs.String("cert.file", "certs/localhost.cert", "SSL certificate")
-	keyFile  = fs.String("key.file", "certs/localhost.key", "Private key")
+	certFile = fs.String("cert.file", "certs/server.cert", "SSL certificate")
+	keyFile  = fs.String("key.file", "certs/server.key", "Private key")
 	httpAddr = fs.String("http.addr", "127.0.0.1:8080", "HTTP server address")
 )
 
@@ -55,7 +55,9 @@ func main() {
 
 		// first valve
 		err = vlv.Shutdown(10 * time.Second)
-		log.Printf("%v", err)
+		if err != nil {
+			log.Printf("%v", err)
+		}
 
 		// create context with timeout
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -63,7 +65,9 @@ func main() {
 
 		// start http shutdown
 		err = srv.Shutdown(ctx)
-		log.Printf("%v", err)
+		if err != nil {
+			log.Printf("%v", err)
+		}
 
 		// verify, in worst case call cancel via defer
 		select {
